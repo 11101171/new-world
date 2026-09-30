@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>交易所钱包的设计演变图册（2010–2025）</title>
+<style>
+:root{
+  --ink:#16222E; --paper:#EFF3F5; --card:#FFFFFF; --mute:#566674; --rule:#CBD5DC;
+  --teal:#0B8A85; --amber:#D9A020; --soft:#E3EAEE;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong","SimSun",Georgia,serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{--ink:#E6EDF1; --paper:#101820; --card:#17222D; --mute:#93A3B0; --rule:#2B3947; --soft:#1D2A36; --teal:#39C2BB; --amber:#E8B84A;}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:4px}
+svg text{font-family:var(--sans)}
+svg .mo{font-family:var(--mono)}
+
+/* 头部 */
+.hero{padding:72px 24px 28px;max-width:1240px;margin:0 auto}
+.hero h1{font:900 clamp(40px,7vw,88px)/1.05 var(--serif);letter-spacing:-.02em;margin:0 0 20px;max-width:14em}
+.hero p.lead{font-size:clamp(17px,2vw,21px);color:var(--mute);max-width:40em;margin:0 0 8px}
+.strip{display:flex;gap:18px;overflow-x:auto;padding:28px 24px 34px;scroll-snap-type:x proximity;max-width:1240px;margin:0 auto}
+.strip a{flex:0 0 min(300px,78vw);scroll-snap-align:start;text-decoration:none;background:var(--card);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.strip svg{display:block;width:100%;height:auto}
+.strip span{display:block;padding:10px 14px 12px;font-size:14px;line-height:1.4}
+.strip b{display:block;font:700 16px var(--serif)}
+.strip a:hover{border-color:var(--teal)}
+
+/* 主体 */
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:168px minmax(0,1fr);gap:48px}
+.rail{position:sticky;top:20px;align-self:start;padding-top:40px}
+.rail ol{list-style:none;margin:0;padding:0 0 0 16px;border-left:2px solid var(--rule)}
+.rail li{margin:0 0 14px;position:relative}
+.rail a{display:block;text-decoration:none;font-size:13px;line-height:1.35;color:var(--mute)}
+.rail a b{display:block;font:700 15px var(--serif);color:var(--ink)}
+.rail li::before{content:"";position:absolute;left:-23px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--rule)}
+.rail li.on::before{background:var(--teal);border-color:var(--teal)}
+.rail li.on a{color:var(--ink)}
+@media (max-width:980px){.wrap{grid-template-columns:1fr}.rail{display:none}}
+
+.era{padding:56px 0 24px;border-top:1px solid var(--rule)}
+.era:first-of-type{border-top:0}
+.era h2{font:900 clamp(26px,3.6vw,40px)/1.2 var(--serif);margin:0 0 6px;letter-spacing:-.01em}
+.era .when{color:var(--mute);margin:0 0 10px;font-size:15px}
+.era .gist{font:500 clamp(18px,2vw,22px)/1.6 var(--serif);max-width:32em;margin:0 0 28px}
+.era-body{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:860px){.era-body{grid-template-columns:1fr}}
+figure{margin:0;position:sticky;top:20px}
+@media (max-width:860px){figure{position:static}}
+figure svg{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--rule)}
+figcaption{font-size:13.5px;color:var(--mute);margin-top:10px;line-height:1.6}
+.txt h3{font:700 18px var(--serif);margin:26px 0 8px}
+.txt h3:first-child{margin-top:0}
+.txt p{margin:0 0 12px;max-width:34em}
+.txt ul{margin:0 0 12px;padding-left:1.2em;max-width:34em}
+.txt li{margin:0 0 6px}
+.swatch{display:flex;gap:6px;margin-top:14px}
+.swatch i{display:block;width:34px;height:20px;border-radius:4px;border:1px solid rgba(0,0,0,.15)}
+.swatch em{font-style:normal;font-size:12.5px;color:var(--mute);align-self:center;margin-left:6px}
+.legacy{background:var(--soft);border-left:4px solid var(--teal);padding:12px 16px;border-radius:0 8px 8px 0;margin-top:18px;max-width:34em}
+.legacy b{font-family:var(--serif)}
+
+/* 主线 */
+.threads{padding:64px 0 16px;border-top:1px solid var(--rule)}
+.threads h2{font:900 clamp(28px,4vw,44px)/1.2 var(--serif);margin:0 0 12px}
+.threads .sub{color:var(--mute);max-width:36em;margin:0 0 30px}
+.thread{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:32px;margin:0 0 40px;align-items:start}
+@media (max-width:860px){.thread{grid-template-columns:1fr}}
+.thread h3{font:700 22px var(--serif);margin:0 0 8px}
+.thread p{margin:0 0 10px;max-width:32em}
+.diagram{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.palettes{display:grid;gap:10px}
+.prow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;font-size:13.5px}
+.prow .bar{display:flex;height:26px;border-radius:5px;overflow:hidden;border:1px solid var(--rule)}
+.prow .bar i{flex:1}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);margin:0 0 48px}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:14.5px;line-height:1.6}
+th,td{text-align:left;padding:12px 14px;vertical-align:top;border-bottom:1px solid var(--rule)}
+th{font:700 14px var(--serif);background:var(--soft);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td:first-child{font:700 14.5px var(--serif);white-space:nowrap}
+
+.lessons{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:0 0 40px}
+.lessons div{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+.lessons h4{font:700 17px var(--serif);margin:0 0 6px}
+.lessons p{margin:0;font-size:15px}
+.note{font-size:13.5px;color:var(--mute);border-top:1px solid var(--rule);padding-top:18px;max-width:46em}
+footer{max-width:1240px;margin:0 auto;padding:0 24px 56px}
+</style>
+</head>
+<body>
+
+<!-- 共用图形库：每个符号是一张 480×320 的示意界面 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+  <linearGradient id="gHero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c6fd1"/><stop offset="1" stop-color="#0b8a85"/></linearGradient>
+  <linearGradient id="gCard" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8b84a"/><stop offset="1" stop-color="#e2763f"/></linearGradient>
+  <linearGradient id="gBg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dde8fa"/><stop offset="1" stop-color="#e9def7"/></linearGradient>
+</defs>
+
+<symbol id="qr" viewBox="0 0 21 21"><rect width="21" height="21" fill="#fff"/><g fill="#111"><rect x="0" y="0" width="1" height="1"/><rect x="1" y="0" width="1" height="1"/><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/><rect x="8" y="0" width="1" height="1"/><rect x="9" y="0" width="1" height="1"/><rect x="11" y="0" width="1" height="1"/><rect x="14" y="0" width="1" height="1"/><rect x="15" y="0" width="1" height="1"/><rect x="16" y="0" width="1" height="1"/><rect x="17" y="0" width="1" height="1"/><rect x="18" y="0" width="1" height="1"/><rect x="19" y="0" width="1" height="1"/><rect x="20" y="0" width="1" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="8" y="1" width="1" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="11" y="1" width="1" height="1"/><rect x="12" y="1" width="1" height="1"/><rect x="14" y="1" width="1" height="1"/><rect x="20" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="14" y="2" width="1" height="1"/><rect x="16" y="2" width="1" height="1"/><rect x="17" y="2" width="1" height="1"/><rect x="18" y="2" width="1" height="1"/><rect x="20" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="14" y="3" width="1" height="1"/><rect x="16" y="3" width="1" height="1"/><rect x="17" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="20" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="14" y="4" width="1" height="1"/><rect x="16" y="4" width="1" height="1"/><rect x="17" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="20" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="6" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="14" y="5" width="1" height="1"/><rect x="20" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="5" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="14" y="6" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/><rect x="16" y="6" width="1" height="1"/><rect x="17" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="19" y="6" width="1" height="1"/><rect x="20" y="6" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="16" y="8" width="1" height="1"/><rect x="0" y="9" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="7" y="9" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="14" y="9" width="1" height="1"/><rect x="15" y="9" width="1" height="1"/><rect x="17" y="9" width="1" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="19" y="9" width="1" height="1"/><rect x="20" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="12" y="10" width="1" height="1"/><rect x="13" y="10" width="1" height="1"/><rect x="14" y="10" width="1" height="1"/><rect x="17" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="19" y="10" width="1" height="1"/><rect x="20" y="10" width="1" height="1"/><rect x="2" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="17" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="19" y="11" width="1" height="1"/><rect x="0" y="12" width="1" height="1"/><rect x="1" y="12" width="1" height="1"/><rect x="2" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="4" y="12" width="1" height="1"/><rect x="5" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="9" y="12" width="1" height="1"/><rect x="10" y="12" width="1" height="1"/><rect x="13" y="12" width="1" height="1"/><rect x="14" y="12" width="1" height="1"/><rect x="15" y="12" width="1" height="1"/><rect x="16" y="12" width="1" height="1"/><rect x="17" y="12" width="1" height="1"/><rect x="20" y="12" width="1" height="1"/><rect x="9" y="13" width="1" height="1"/><rect x="10" y="13" width="1" height="1"/><rect x="11" y="13" width="1" height="1"/><rect x="12" y="13" width="1" height="1"/><rect x="14" y="13" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/><rect x="18" y="13" width="1" height="1"/><rect x="20" y="13" width="1" height="1"/><rect x="0" y="14" width="1" height="1"/><rect x="1" y="14" width="1" height="1"/><rect x="2" y="14" width="1" height="1"/><rect x="3" y="14" width="1" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="5" y="14" width="1" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="12" y="14" width="1" height="1"/><rect x="13" y="14" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/><rect x="18" y="14" width="1" height="1"/><rect x="19" y="14" width="1" height="1"/><rect x="0" y="15" width="1" height="1"/><rect x="6" y="15" width="1" height="1"/><rect x="13" y="15" width="1" height="1"/><rect x="15" y="15" width="1" height="1"/><rect x="16" y="15" width="1" height="1"/><rect x="17" y="15" width="1" height="1"/><rect x="18" y="15" width="1" height="1"/><rect x="19" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="2" y="16" width="1" height="1"/><rect x="3" y="16" width="1" height="1"/><rect x="4" y="16" width="1" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="9" y="16" width="1" height="1"/><rect x="13" y="16" width="1" height="1"/><rect x="14" y="16" width="1" height="1"/><rect x="15" y="16" width="1" height="1"/><rect x="16" y="16" width="1" height="1"/><rect x="17" y="16" width="1" height="1"/><rect x="0" y="17" width="1" height="1"/><rect x="2" y="17" width="1" height="1"/><rect x="3" y="17" width="1" height="1"/><rect x="4" y="17" width="1" height="1"/><rect x="6" y="17" width="1" height="1"/><rect x="8" y="17" width="1" height="1"/><rect x="11" y="17" width="1" height="1"/><rect x="16" y="17" width="1" height="1"/><rect x="17" y="17" width="1" height="1"/><rect x="19" y="17" width="1" height="1"/><rect x="0" y="18" width="1" height="1"/><rect x="2" y="18" width="1" height="1"/><rect x="3" y="18" width="1" height="1"/><rect x="4" y="18" width="1" height="1"/><rect x="6" y="18" width="1" height="1"/><rect x="9" y="18" width="1" height="1"/><rect x="10" y="18" width="1" height="1"/><rect x="13" y="18" width="1" height="1"/><rect x="14" y="18" width="1" height="1"/><rect x="15" y="18" width="1" height="1"/><rect x="18" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="6" y="19" width="1" height="1"/><rect x="9" y="19" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/><rect x="12" y="19" width="1" height="1"/><rect x="17" y="19" width="1" height="1"/><rect x="20" y="19" width="1" height="1"/><rect x="0" y="20" width="1" height="1"/><rect x="1" y="20" width="1" height="1"/><rect x="2" y="20" width="1" height="1"/><rect x="3" y="20" width="1" height="1"/><rect x="4" y="20" width="1" height="1"/><rect x="5" y="20" width="1" height="1"/><rect x="6" y="20" width="1" height="1"/><rect x="8" y="20" width="1" height="1"/><rect x="9" y="20" width="1" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="12" y="20" width="1" height="1"/><rect x="13" y="20" width="1" height="1"/><rect x="14" y="20" width="1" height="1"/><rect x="16" y="20" width="1" height="1"/><rect x="17" y="20" width="1" height="1"/><rect x="20" y="20" width="1" height="1"/></g></symbol>
+
+<!-- m1：2010–2013 余额表 -->
+<symbol id="m1" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#b9bcc0"/>
+  <rect x="34" y="26" width="412" height="270" fill="#ece9d8" stroke="#3a3a3a"/>
+  <rect x="34" y="26" width="412" height="22" fill="#2a5db0"/>
+  <text x="44" y="41" font-size="11" fill="#fff" font-weight="700">Account – Balances</text>
+  <rect x="424" y="30" width="16" height="14" fill="#d2452f" stroke="#fff"/>
+  <text x="432" y="41" font-size="10" fill="#fff" text-anchor="middle">x</text>
+  <rect x="48" y="60" width="384" height="20" fill="#d4d0c8" stroke="#808080"/>
+  <g font-size="10.5" fill="#111" font-weight="700"><text x="58" y="74">Currency</text><text x="170" y="74">Available</text><text x="300" y="74">In orders</text></g>
+  <g font-size="10.5" fill="#111">
+    <rect x="48" y="80" width="384" height="22" fill="#fff" stroke="#b5b1a3"/><text x="58" y="95">BTC</text><text x="170" y="95" class="mo">12.50000000</text><text x="300" y="95" class="mo">0.50000000</text>
+    <rect x="48" y="102" width="384" height="22" fill="#f6f5ee" stroke="#b5b1a3"/><text x="58" y="117">LTC</text><text x="170" y="117" class="mo">40.00000000</text><text x="300" y="117" class="mo">0.00000000</text>
+    <rect x="48" y="124" width="384" height="22" fill="#fff" stroke="#b5b1a3"/><text x="58" y="139">USD</text><text x="170" y="139" class="mo">340.12</text><text x="300" y="139" class="mo">0.00</text>
+  </g>
+  <text x="48" y="176" font-size="10.5" fill="#111">Deposit address (BTC):</text>
+  <rect x="48" y="184" width="384" height="22" fill="#fff" stroke="#7f9db9"/>
+  <text x="56" y="199" font-size="10.5" class="mo" fill="#111">1Kx9Qm4ZrTn8vE2sLwYc7HjD3pXaB5uGt</text>
+  <rect x="48" y="222" width="80" height="24" rx="3" fill="#ece9d8" stroke="#003c74"/><text x="88" y="238" font-size="11" text-anchor="middle" fill="#111">Deposit</text>
+  <rect x="138" y="222" width="80" height="24" rx="3" fill="#ece9d8" stroke="#003c74"/><text x="178" y="238" font-size="11" text-anchor="middle" fill="#111">Withdraw</text>
+  <text x="48" y="264" font-size="9.5" fill="#7a2a2a">Warning: double-check the address. Transactions cannot be reversed.</text>
+  <rect x="34" y="274" width="412" height="22" fill="#d4d0c8" stroke="#808080"/>
+  <text x="44" y="289" font-size="9.5" fill="#111">Last update: 2 min ago (press F5 to refresh)</text>
+</symbol>
+
+<!-- m2：2013–2015 网页钱包 -->
+<symbol id="m2" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#dfe7ee"/>
+  <rect x="30" y="20" width="420" height="284" rx="8" fill="#fff"/>
+  <path d="M30 28a8 8 0 0 1 8-8h404a8 8 0 0 1 8 8v28H30z" fill="#0f6e8c"/>
+  <circle cx="52" cy="38" r="9" fill="#fff"/><text x="70" y="43" font-size="14" font-weight="700" fill="#fff">资金</text>
+  <text x="430" y="43" font-size="11" fill="#cfe6ee" text-anchor="end">alice@mail</text>
+  <g font-size="13"><text x="50" y="80" font-weight="700" fill="#0f6e8c">充值</text><text x="110" y="80" fill="#6a7b87">提现</text><text x="170" y="80" fill="#6a7b87">记录</text></g>
+  <rect x="46" y="86" width="34" height="3" fill="#0f6e8c"/><rect x="30" y="89" width="420" height="1" fill="#dbe3e9"/>
+  <rect x="50" y="106" width="118" height="118" fill="#fff" stroke="#dbe3e9"/><use href="#qr" x="54" y="110" width="110" height="110"/>
+  <text x="188" y="120" font-size="12" fill="#33414c">向下方地址发送 BTC</text>
+  <rect x="188" y="130" width="242" height="30" rx="4" fill="#f1f5f8" stroke="#dbe3e9"/>
+  <text x="198" y="149" font-size="10.5" class="mo" fill="#22303a">1Kx9Qm4ZrTn8vE2sLwYc7HjD3pXaB5uGt</text>
+  <rect x="188" y="170" width="84" height="26" rx="4" fill="#0f6e8c"/><text x="230" y="187" font-size="12" fill="#fff" text-anchor="middle">复制地址</text>
+  <text x="188" y="222" font-size="11.5" fill="#33414c">确认数 2 / 3</text>
+  <rect x="188" y="230" width="242" height="8" rx="4" fill="#e3eaef"/><rect x="188" y="230" width="161" height="8" rx="4" fill="#2aa36b"/>
+  <text x="50" y="250" font-size="10.5" fill="#7a8894">仅支持 BTC。</text>
+  <text x="50" y="266" font-size="10.5" fill="#7a8894">提现需通过邮件确认。</text>
+  <rect x="50" y="276" width="380" height="1" fill="#e6ecf0"/>
+  <text x="50" y="293" font-size="10.5" fill="#7a8894">最近一次充值 · 0.5000 BTC · 处理中</text>
+</symbol>
+
+<!-- m3：2016–2017 手机币种列表 -->
+<symbol id="m3" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#12151b"/>
+  <path d="M0 250 L40 230 L80 240 L120 200 L160 210 L200 170 M280 190 L320 150 L360 165 L400 120 L440 135 L480 90" fill="none" stroke="#1f2733" stroke-width="3"/>
+  <rect x="150" y="8" width="180" height="304" rx="24" fill="#0e1117" stroke="#2c3340" stroke-width="2"/>
+  <text x="170" y="30" font-size="9" fill="#848e9c">9:41</text>
+  <text x="170" y="54" font-size="15" font-weight="700" fill="#eaecef">资产</text>
+  <text x="170" y="86" font-size="22" font-weight="700" fill="#f5f5f5">0.4821<tspan font-size="11" fill="#848e9c"> BTC</tspan></text>
+  <text x="170" y="102" font-size="10" fill="#848e9c">≈ ¥21,406</text>
+  <rect x="170" y="110" width="140" height="20" rx="10" fill="#1e2329"/><text x="184" y="124" font-size="9.5" fill="#5e6673">搜索币种</text>
+  <rect x="170" y="140" width="22" height="12" rx="6" fill="#e8a317"/><circle cx="186" cy="146" r="4.5" fill="#0e1117"/><text x="198" y="150" font-size="9.5" fill="#b7bdc6">隐藏小额资产</text>
+  <g font-size="11">
+    <circle cx="182" cy="176" r="9" fill="#e8a317"/><text x="182" y="180" font-size="10" text-anchor="middle" fill="#0e1117" font-weight="700">B</text>
+    <text x="198" y="174" fill="#eaecef" font-weight="700">BTC</text><text x="198" y="186" font-size="8.5" fill="#848e9c">Bitcoin</text>
+    <text x="310" y="174" text-anchor="end" fill="#eaecef" class="mo">0.2100</text><text x="310" y="186" font-size="8.5" text-anchor="end" fill="#848e9c">≈ ¥9,324</text>
+    <circle cx="182" cy="210" r="9" fill="#6b7fd7"/><text x="182" y="214" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">E</text>
+    <text x="198" y="208" fill="#eaecef" font-weight="700">ETH</text><text x="198" y="220" font-size="8.5" fill="#848e9c">Ethereum</text>
+    <text x="310" y="208" text-anchor="end" fill="#eaecef" class="mo">3.4000</text><text x="310" y="220" font-size="8.5" text-anchor="end" fill="#848e9c">≈ ¥8,120</text>
+    <circle cx="182" cy="244" r="9" fill="#58bf00"/><text x="182" y="248" font-size="10" text-anchor="middle" fill="#0e1117" font-weight="700">N</text>
+    <text x="198" y="242" fill="#eaecef" font-weight="700">NEO</text><text x="198" y="254" font-size="8.5" fill="#848e9c">NEO</text>
+    <text x="310" y="242" text-anchor="end" fill="#eaecef" class="mo">15.0000</text><text x="310" y="254" font-size="8.5" text-anchor="end" fill="#848e9c">≈ ¥1,960</text>
+  </g>
+  <rect x="150" y="276" width="180" height="36" rx="0" fill="#161a21"/>
+  <g fill="#5e6673"><circle cx="186" cy="294" r="4"/><circle cx="222" cy="294" r="4"/><circle cx="258" cy="294" r="4"/></g><circle cx="294" cy="294" r="4" fill="#e8a317"/>
+</symbol>
+
+<!-- m4：2018–2019 分层账户与划转 -->
+<symbol id="m4" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#e6ebf1"/>
+  <rect x="24" y="20" width="432" height="280" rx="8" fill="#fff" stroke="#d3dbe4"/>
+  <path d="M24 28a8 8 0 0 1 8-8h416a8 8 0 0 1 8 8v22H24z" fill="#0b1f3a"/>
+  <text x="38" y="40" font-size="12" font-weight="700" fill="#fff">资产总览</text><text x="440" y="40" font-size="11" fill="#9db4d3" text-anchor="end" class="mo">≈ 2.36 BTC</text>
+  <g font-size="11">
+    <rect x="38" y="62" width="150" height="38" rx="5" fill="#f4f7fa" stroke="#dde3ea"/><rect x="38" y="62" width="4" height="38" fill="#2f6fd0"/><text x="52" y="78" font-weight="700" fill="#16222E">资金账户</text><text x="52" y="93" font-size="10" class="mo" fill="#566674">0.80 BTC</text>
+    <rect x="38" y="106" width="150" height="38" rx="5" fill="#f4f7fa" stroke="#dde3ea"/><rect x="38" y="106" width="4" height="38" fill="#0b8a85"/><text x="52" y="122" font-weight="700" fill="#16222E">现货账户</text><text x="52" y="137" font-size="10" class="mo" fill="#566674">0.95 BTC</text>
+    <rect x="38" y="150" width="150" height="38" rx="5" fill="#f4f7fa" stroke="#dde3ea"/><rect x="38" y="150" width="4" height="38" fill="#8a5cd6"/><text x="52" y="166" font-weight="700" fill="#16222E">杠杆账户</text><text x="52" y="181" font-size="10" class="mo" fill="#566674">0.21 BTC</text>
+    <rect x="38" y="194" width="150" height="38" rx="5" fill="#eaf1fd" stroke="#2f6fd0"/><rect x="38" y="194" width="4" height="38" fill="#e0a526"/><text x="52" y="210" font-weight="700" fill="#16222E">合约账户</text><text x="52" y="225" font-size="10" class="mo" fill="#566674">0.40 BTC</text>
+    <rect x="38" y="238" width="150" height="38" rx="5" fill="#f4f7fa" stroke="#dde3ea"/><rect x="38" y="238" width="4" height="38" fill="#9aa8b5"/><text x="52" y="254" font-weight="700" fill="#16222E">法币账户</text><text x="52" y="269" font-size="10" class="mo" fill="#566674">0.00 BTC</text>
+  </g>
+  <rect x="204" y="62" width="240" height="152" rx="6" fill="#f6f8fb" stroke="#dde3ea"/>
+  <text x="216" y="82" font-size="12" font-weight="700" fill="#16222E">资金划转</text>
+  <text x="216" y="100" font-size="10" fill="#566674">从</text><rect x="234" y="90" width="196" height="16" rx="3" fill="#fff" stroke="#cbd5dc"/><text x="242" y="102" font-size="10" fill="#16222E">资金账户</text>
+  <circle cx="324" cy="118" r="8" fill="#2f6fd0"/><text x="324" y="122" font-size="10" fill="#fff" text-anchor="middle">↓</text>
+  <text x="216" y="140" font-size="10" fill="#566674">到</text><rect x="234" y="130" width="196" height="16" rx="3" fill="#fff" stroke="#cbd5dc"/><text x="242" y="142" font-size="10" fill="#16222E">合约账户</text>
+  <rect x="216" y="156" width="214" height="20" rx="3" fill="#fff" stroke="#cbd5dc"/><text x="224" y="170" font-size="10" class="mo" fill="#16222E">0.10 BTC</text><text x="422" y="170" font-size="10" fill="#2f6fd0" text-anchor="end">全部</text>
+  <rect x="216" y="184" width="214" height="22" rx="4" fill="#e0a526"/><text x="323" y="199" font-size="11.5" font-weight="700" fill="#16222E" text-anchor="middle">确认划转</text>
+  <rect x="204" y="224" width="240" height="52" rx="6" fill="#fff" stroke="#dde3ea"/>
+  <g font-size="10"><text x="214" y="240" fill="#16222E"><tspan fill="#2aa36b">✓</tspan> 谷歌验证器　已开启</text><text x="214" y="254" fill="#16222E"><tspan fill="#2aa36b">✓</tspan> 提现地址白名单　已开启</text><text x="214" y="268" fill="#16222E"><tspan fill="#2aa36b">✓</tspan> 防钓鱼码　<tspan class="mo">Fj7***</tspan></text></g>
+</symbol>
+
+<!-- m5：2020–2021 财富首页 -->
+<symbol id="m5" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="url(#gBg5)"/>
+  <rect x="150" y="8" width="180" height="304" rx="24" fill="#f5f7fb" stroke="#bcc7db" stroke-width="2"/>
+  <rect x="160" y="34" width="160" height="88" rx="12" fill="url(#gHero)"/>
+  <text x="172" y="54" font-size="9" fill="#d5e6f6">总资产 (USDT)</text>
+  <text x="172" y="78" font-size="21" font-weight="700" fill="#fff">12,480.36</text>
+  <text x="172" y="94" font-size="9" fill="#bfe9df">今日 +1.8%</text>
+  <path d="M232 112 L246 104 L258 108 L272 96 L286 100 L300 86 L312 90" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-size="8.5" fill="#33414c" text-anchor="middle">
+    <circle cx="184" cy="144" r="13" fill="#e2eaf6"/><text x="184" y="148" font-size="11" fill="#1c6fd1">↓</text><text x="184" y="170">充币</text>
+    <circle cx="222" cy="144" r="13" fill="#e2eaf6"/><text x="222" y="148" font-size="11" fill="#1c6fd1">↑</text><text x="222" y="170">提币</text>
+    <circle cx="260" cy="144" r="13" fill="#e2eaf6"/><text x="260" y="148" font-size="11" fill="#1c6fd1">⇄</text><text x="260" y="170">划转</text>
+    <circle cx="298" cy="144" r="13" fill="#e2eaf6"/><text x="298" y="148" font-size="11" fill="#1c6fd1">＋</text><text x="298" y="170">买币</text>
+  </g>
+  <rect x="160" y="182" width="160" height="54" rx="10" fill="#fff" stroke="#dbe3ef"/>
+  <text x="172" y="200" font-size="9.5" font-weight="700" fill="#16222E">活期理财</text>
+  <text x="172" y="224" font-size="15" font-weight="700" fill="#0b8a85">年化 4.20%</text>
+  <rect x="270" y="206" width="40" height="18" rx="9" fill="#0b8a85"/><text x="290" y="218" font-size="9" fill="#fff" text-anchor="middle">申购</text>
+  <rect x="160" y="244" width="76" height="58" rx="10" fill="#fff" stroke="#dbe3ef"/>
+  <text x="170" y="260" font-size="9" font-weight="700" fill="#16222E">新币申购</text><rect x="170" y="268" width="56" height="8" rx="4" fill="#e5ecf7"/><rect x="170" y="268" width="36" height="8" rx="4" fill="#e0a526"/><text x="170" y="292" font-size="8" fill="#566674">进行中 64%</text>
+  <rect x="244" y="244" width="76" height="58" rx="10" fill="#fff" stroke="#dbe3ef"/>
+  <text x="254" y="260" font-size="9" font-weight="700" fill="#16222E">NFT</text>
+  <rect x="254" y="266" width="24" height="24" rx="4" fill="#8a5cd6"/><rect x="282" y="266" width="24" height="24" rx="4" fill="#e2763f"/><circle cx="266" cy="278" r="5" fill="#f1e3ff"/><path d="M286 288 l8 -14 l8 14z" fill="#ffe3c9"/>
+</symbol>
+
+<!-- m6：2022–2024 交易所 / Web3 双模式 -->
+<symbol id="m6" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#e4e9f0"/>
+  <rect x="150" y="8" width="180" height="304" rx="24" fill="#fbfcfd" stroke="#b7c2d0" stroke-width="2"/>
+  <rect x="164" y="30" width="152" height="24" rx="12" fill="#e6eaf0"/><rect x="240" y="32" width="74" height="20" rx="10" fill="#fff" stroke="#cfd7e2"/>
+  <text x="202" y="46" font-size="10" fill="#566674" text-anchor="middle">交易所</text><text x="277" y="46" font-size="10" font-weight="700" fill="#16222E" text-anchor="middle">Web3 钱包</text>
+  <rect x="164" y="62" width="104" height="18" rx="9" fill="#f0f3f7" stroke="#dbe3ef"/><text x="174" y="75" font-size="9" class="mo" fill="#33414c">0x8f3a…c21e</text><circle cx="258" cy="71" r="3.5" fill="#2aa36b"/>
+  <g font-size="8.5" fill="#33414c">
+    <rect x="164" y="90" width="30" height="16" rx="8" fill="#16222E"/><text x="179" y="101" fill="#fff" text-anchor="middle">ETH</text>
+    <rect x="198" y="90" width="30" height="16" rx="8" fill="#eef2f6" stroke="#dbe3ef"/><text x="213" y="101" text-anchor="middle">BSC</text>
+    <rect x="232" y="90" width="30" height="16" rx="8" fill="#eef2f6" stroke="#dbe3ef"/><text x="247" y="101" text-anchor="middle">SOL</text>
+    <rect x="266" y="90" width="34" height="16" rx="8" fill="#eef2f6" stroke="#dbe3ef"/><text x="283" y="101" text-anchor="middle">ARB</text>
+  </g>
+  <text x="164" y="132" font-size="20" font-weight="700" fill="#16222E">$3,204.55</text>
+  <g font-size="10">
+    <circle cx="174" cy="156" r="8" fill="#6b7fd7"/><text x="188" y="154" font-weight="700" fill="#16222E">ETH</text><text x="188" y="165" font-size="8" fill="#7a8894">Ethereum</text><text x="316" y="154" text-anchor="end" class="mo" fill="#16222E">0.82</text><text x="316" y="165" font-size="8" text-anchor="end" fill="#7a8894">$2,610</text>
+    <circle cx="174" cy="186" r="8" fill="#2f9e6b"/><text x="188" y="184" font-weight="700" fill="#16222E">USDT</text><text x="188" y="195" font-size="8" fill="#7a8894">Tether</text><text x="316" y="184" text-anchor="end" class="mo" fill="#16222E">594.5</text><text x="316" y="195" font-size="8" text-anchor="end" fill="#7a8894">$594</text>
+  </g>
+  <g font-size="8.5" fill="#33414c" text-anchor="middle">
+    <rect x="164" y="208" width="34" height="34" rx="9" fill="#e6effc"/><text x="181" y="230" font-size="13" fill="#1c6fd1">⇄</text><text x="181" y="254">兑换</text>
+    <rect x="204" y="208" width="34" height="34" rx="9" fill="#e6f5f1"/><text x="221" y="230" font-size="13" fill="#0b8a85">◎</text><text x="221" y="254">质押</text>
+    <rect x="244" y="208" width="34" height="34" rx="9" fill="#efe9fb"/><text x="261" y="230" font-size="13" fill="#8a5cd6">⤳</text><text x="261" y="254">跨链</text>
+    <rect x="284" y="208" width="34" height="34" rx="9" fill="#fdf1dc"/><text x="301" y="230" font-size="13" fill="#c98a12">⚑</text><text x="301" y="254">授权</text>
+  </g>
+  <rect x="164" y="268" width="152" height="30" rx="8" fill="#fff4d9" stroke="#f0d28a"/>
+  <text x="174" y="280" font-size="9" font-weight="700" fill="#7a5a10">3 个授权待检查</text><text x="174" y="291" font-size="8" fill="#8c6d25">其中 1 个无限额度</text>
+</symbol>
+
+<!-- m7：2023–2025 通行密钥、MPC 与交易预览 -->
+<symbol id="m7" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#dcebe9"/>
+  <rect x="42" y="12" width="176" height="296" rx="22" fill="#fff" stroke="#a9c2bf" stroke-width="2"/>
+  <text x="130" y="42" font-size="13" font-weight="700" fill="#16222E" text-anchor="middle">创建钱包</text>
+  <g fill="none" stroke="#0b8a85" stroke-width="2.4" stroke-linecap="round"><circle cx="130" cy="92" r="30" stroke-opacity=".25"/><path d="M112 96 a18 18 0 0 1 36 0"/><path d="M118 104 a12 12 0 0 1 24 0"/><path d="M124 112 a6 6 0 0 1 12 0"/></g>
+  <text x="130" y="146" font-size="10.5" fill="#33414c" text-anchor="middle">用通行密钥创建</text>
+  <text x="130" y="161" font-size="10.5" fill="#33414c" text-anchor="middle">无需抄写助记词</text>
+  <g stroke="#a9c2bf" stroke-width="1.5"><path d="M76 200 L130 218 M130 200 L130 218 M184 200 L130 218"/></g>
+  <g font-size="9" text-anchor="middle" fill="#33414c">
+    <circle cx="76" cy="192" r="11" fill="#e6f5f1" stroke="#0b8a85"/><text x="76" y="195" fill="#0b8a85">◧</text><text x="76" y="216">设备</text>
+    <circle cx="130" cy="192" r="11" fill="#e6effc" stroke="#1c6fd1"/><text x="130" y="195" fill="#1c6fd1">☁</text><text x="130" y="216">云端</text>
+    <circle cx="184" cy="192" r="11" fill="#efe9fb" stroke="#8a5cd6"/><text x="184" y="195" fill="#8a5cd6">◈</text><text x="184" y="216">服务</text>
+  </g>
+  <text x="130" y="240" font-size="8.5" fill="#7a8894" text-anchor="middle">密钥拆成三份，任意两份可恢复</text>
+  <rect x="62" y="256" width="136" height="32" rx="16" fill="#0b8a85"/><text x="130" y="276" font-size="11.5" font-weight="700" fill="#fff" text-anchor="middle">使用面容创建</text>
+
+  <rect x="262" y="12" width="176" height="296" rx="22" fill="#fff" stroke="#a9c2bf" stroke-width="2"/>
+  <text x="350" y="42" font-size="13" font-weight="700" fill="#16222E" text-anchor="middle">确认交易</text>
+  <rect x="276" y="56" width="148" height="86" rx="10" fill="#f4f8f8" stroke="#d4e2e0"/>
+  <text x="286" y="74" font-size="9.5" fill="#566674">预计资产变化</text>
+  <text x="286" y="98" font-size="14" font-weight="700" fill="#c4452f" class="mo">− 100 USDT</text>
+  <text x="286" y="122" font-size="14" font-weight="700" fill="#1f8a55" class="mo">+ 0.031 ETH</text>
+  <rect x="276" y="152" width="148" height="20" rx="10" fill="#e3f4ea"/><text x="286" y="166" font-size="9.5" fill="#1f6a45">✓ 合约已验证</text>
+  <rect x="276" y="178" width="148" height="20" rx="10" fill="#fff1d6"/><text x="286" y="192" font-size="9.5" fill="#8a5f0f">! 首次与该地址交互</text>
+  <rect x="276" y="204" width="148" height="20" rx="10" fill="#eef2f6"/><text x="286" y="218" font-size="9.5" fill="#566674">网络费用 ≈ $0.4，用 USDT 支付</text>
+  <rect x="276" y="256" width="148" height="32" rx="16" fill="#16222E"/><text x="350" y="276" font-size="11.5" font-weight="700" fill="#fff" text-anchor="middle">长按确认</text>
+</symbol>
+
+<!-- m8：2025 起 超级应用、稳定币与对话 -->
+<symbol id="m8" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#0d1b2e"/>
+  <circle cx="60" cy="70" r="80" fill="#12294a"/><circle cx="440" cy="290" r="90" fill="#0f2f3d"/>
+  <rect x="112" y="8" width="176" height="304" rx="24" fill="#101d31" stroke="#2b4266" stroke-width="2"/>
+  <text x="128" y="36" font-size="10" fill="#8fa5c2">总余额</text>
+  <text x="128" y="64" font-size="24" font-weight="700" fill="#f2f6fb">$1,250.00</text>
+  <text x="128" y="80" font-size="9" fill="#7fe0c8">稳定币 · 今日收益 +$0.14</text>
+  <rect x="126" y="94" width="148" height="86" rx="12" fill="url(#gCard)"/>
+  <text x="138" y="114" font-size="10" font-weight="700" fill="#2a1a08">虚拟卡</text>
+  <text x="138" y="160" font-size="13" class="mo" fill="#2a1a08">•••• 4821</text><circle cx="250" cy="160" r="9" fill="#fff" fill-opacity=".45"/><circle cx="260" cy="160" r="9" fill="#fff" fill-opacity=".3"/>
+  <g font-size="9" fill="#c6d4e6" text-anchor="middle">
+    <rect x="126" y="194" width="44" height="40" rx="10" fill="#182b47"/><text x="148" y="212" font-size="13" fill="#7fe0c8">↓</text><text x="148" y="226">收款</text>
+    <rect x="178" y="194" width="44" height="40" rx="10" fill="#182b47"/><text x="200" y="212" font-size="13" fill="#7fe0c8">↑</text><text x="200" y="226">转账</text>
+    <rect x="230" y="194" width="44" height="40" rx="10" fill="#182b47"/><text x="252" y="212" font-size="13" fill="#7fe0c8">▣</text><text x="252" y="226">支付</text>
+  </g>
+  <rect x="126" y="256" width="148" height="34" rx="17" fill="#182b47" stroke="#2b4266"/>
+  <text x="142" y="277" font-size="10" fill="#7f95b3">告诉我你想做什么…</text><circle cx="256" cy="273" r="9" fill="#0b8a85"/><text x="256" y="277" font-size="11" fill="#fff" text-anchor="middle">↑</text>
+
+  <rect x="304" y="44" width="164" height="54" rx="12" fill="#1c3355"/>
+  <text x="316" y="64" font-size="10" fill="#e8eef6">帮我把 200 USDT 换成</text><text x="316" y="80" font-size="10" fill="#e8eef6">ETH，滑点别超过 0.5%</text>
+  <rect x="304" y="108" width="164" height="110" rx="12" fill="#fff"/>
+  <text x="316" y="128" font-size="10.5" font-weight="700" fill="#16222E">请确认这笔兑换</text>
+  <g font-size="9.5" fill="#33414c"><text x="316" y="146">卖出　200 USDT</text><text x="316" y="161">买入　≈ 0.062 ETH</text><text x="316" y="176">预计费用　$0.4</text></g>
+  <rect x="316" y="188" width="64" height="20" rx="10" fill="#0b8a85"/><text x="348" y="202" font-size="10" fill="#fff" text-anchor="middle">确认</text>
+  <rect x="388" y="188" width="70" height="20" rx="10" fill="#eef2f6"/><text x="423" y="202" font-size="10" fill="#33414c" text-anchor="middle">修改</text>
+  <rect x="14" y="132" width="86" height="46" rx="10" fill="#182b47"/><text x="24" y="150" font-size="9" fill="#8fa5c2">支付成功</text><text x="24" y="167" font-size="12" font-weight="700" fill="#f2f6fb">¥38.00</text>
+</symbol>
+</svg>
+
+<header class="hero">
+  <h1>交易所钱包的设计演变，一份看得见的图册</h1>
+  <p class="lead">从 2010 年前后的一张余额表，到今天把账户、自托管、支付与对话放进同一个入口——十五年里，交易所钱包的界面一直在回答同一个问题：怎样让人放心地拿起、看懂并移动自己的资产。</p>
+  <p class="lead">下面八幅示意图按时间排列，每幅配有背景、界面特征、痛点与对后续设计的影响。点击任意一幅可跳到对应章节。</p>
+</header>
+
+<nav class="strip" aria-label="八个阶段总览">
+  <a href="#e1"><svg viewBox="0 0 480 320" role="img" aria-label="余额表阶段示意"><use href="#m1" width="480" height="320"/></svg><span><b>余额表</b>2010–2013</span></a>
+  <a href="#e2"><svg viewBox="0 0 480 320" role="img" aria-label="网页钱包阶段示意"><use href="#m2" width="480" height="320"/></svg><span><b>网页钱包与充提分页</b>2013–2015</span></a>
+  <a href="#e3"><svg viewBox="0 0 480 320" role="img" aria-label="手机币种列表阶段示意"><use href="#m3" width="480" height="320"/></svg><span><b>手机端币种列表</b>2016–2017</span></a>
+  <a href="#e4"><svg viewBox="0 0 480 320" role="img" aria-label="分层账户阶段示意"><use href="#m4" width="480" height="320"/></svg><span><b>分层账户与划转</b>2018–2019</span></a>
+  <a href="#e5"><svg viewBox="0 0 480 320" role="img" aria-label="财富首页阶段示意"><use href="#m5" width="480" height="320"/></svg><span><b>财富首页</b>2020–2021</span></a>
+  <a href="#e6"><svg viewBox="0 0 480 320" role="img" aria-label="双模式阶段示意"><use href="#m6" width="480" height="320"/></svg><span><b>内置 Web3 钱包</b>2022–2024</span></a>
+  <a href="#e7"><svg viewBox="0 0 480 320" role="img" aria-label="通行密钥阶段示意"><use href="#m7" width="480" height="320"/></svg><span><b>无助记词与交易预览</b>2023–2025</span></a>
+  <a href="#e8"><svg viewBox="0 0 480 320" role="img" aria-label="超级应用阶段示意"><use href="#m8" width="480" height="320"/></svg><span><b>超级应用与对话入口</b>2025 起</span></a>
+</nav>
+
+<div class="wrap">
+<nav class="rail" aria-label="章节导航">
+  <ol>
+    <li data-t="e1"><a href="#e1"><b>2010</b>余额表</a></li>
+    <li data-t="e2"><a href="#e2"><b>2013</b>网页钱包</a></li>
+    <li data-t="e3"><a href="#e3"><b>2016</b>币种列表</a></li>
+    <li data-t="e4"><a href="#e4"><b>2018</b>分层账户</a></li>
+    <li data-t="e5"><a href="#e5"><b>2020</b>财富首页</a></li>
+    <li data-t="e6"><a href="#e6"><b>2022</b>双模式</a></li>
+    <li data-t="e7"><a href="#e7"><b>2023</b>无助记词</a></li>
+    <li data-t="e8"><a href="#e8"><b>2025</b>超级应用</a></li>
+    <li data-t="lines"><a href="#lines"><b>回看</b>五条主线</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="era" id="e1">
+  <h2>表格即钱包：一张余额表加一串地址</h2>
+  <p class="when">约 2010–2013 · 早期交易所与桌面客户端并行</p>
+  <p class="gist">那时交易所的“钱包”其实不算产品，只是账户页里的一张表，外加一串需要自己复制的字符。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="早期交易所余额表界面示意"><use href="#m1" width="480" height="320"/></svg>
+      <figcaption>示意图：系统控件风格的余额窗口。三列表格、纯文本地址、灰色按钮，页面要手动刷新。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>比特币还是小圈子的东西，交易所多半由论坛和爱好者社区演化而来。用户本来就懂“地址”“区块确认”，产品不需要向他们解释。个人自持的方式是运行比特币核心客户端（如 Bitcoin-Qt）并同步完整区块；交易所则用一个网站替用户省掉了同步和备份。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>以数据表格为主：币种、可用、冻结三列，几乎没有图标。</li>
+        <li>充值地址是一段纯文本，用户自己复制，靠肉眼核对首尾字符。</li>
+        <li>提现就是一份表单：地址、数量、提交；状态要刷新页面才能看到。</li>
+        <li>视觉借用系统控件或论坛皮肤，按钮是灰色立体按钮。</li>
+        <li>BTC 是绝对中心，其他币种只是后来追加的几行。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>地址复制错误无法挽回；看不懂“确认数”；没有任何防误操作的设计；页面卡住时无法判断提交是否成功。</p>
+      <div class="legacy"><b>留下的遗产：</b>“可用 / 冻结”这对概念沿用至今，仍是交易所资产页最基本的语法。</div>
+      <div class="swatch"><i style="background:#b9bcc0"></i><i style="background:#ece9d8"></i><i style="background:#2a5db0"></i><i style="background:#d2452f"></i><em>系统灰、米色控件、标题栏蓝</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e2">
+  <h2>网页钱包与充提分页：转账第一次像一个流程</h2>
+  <p class="when">约 2013–2015 · 面向大众的托管网页钱包出现</p>
+  <p class="gist">二维码、确认进度条、充值 / 提现 / 记录三个分页，把“发一笔币”拆成了普通人能走完的几步。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="网页钱包充值页示意"><use href="#m2" width="480" height="320"/></svg>
+      <figcaption>示意图：充值页。二维码在左，地址与复制按钮在右，确认数被画成一条进度条。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>Coinbase 等一批面向普通人的托管网页钱包在这一时期成型，交易所也开始设立独立的“资金”页面。目标用户从极客扩展到只想买一点比特币的人，产品第一次需要“翻译”底层概念。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>充值、提现、记录三分页，成为此后十几年的通用结构。</li>
+        <li>二维码与“复制地址”按钮取代了手抄。</li>
+        <li>区块确认被翻译成进度条：2 / 3，比一句技术说明直观得多。</li>
+        <li>提现需邮件确认，是最早的一层“二次确认”。</li>
+        <li>扁平化的蓝白配色，页面明亮，强调“干净、可信”。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>邮件确认经常延迟；币种增多后地址页越来越长；二维码带来便利的同时，也带来“扫错地址”“地址被替换”的新风险；手机端只是缩小版的网页。</p>
+      <div class="legacy"><b>留下的遗产：</b>三分页结构、二维码、把技术术语翻译成进度和状态的做法。</div>
+      <div class="swatch"><i style="background:#dfe7ee"></i><i style="background:#0f6e8c"></i><i style="background:#2aa36b"></i><i style="background:#fff"></i><em>浅灰蓝底、青蓝顶栏、成功绿</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e3">
+  <h2>手机端币种列表：估值成了首屏主角</h2>
+  <p class="when">约 2016–2017 · ICO 热潮，币种数量爆发</p>
+  <p class="gist">币种从几个变成上百个，资产页变成一份可搜索、可折叠的列表，“折合多少钱”比“有多少枚”更先被看到。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="手机端资产列表示意"><use href="#m3" width="480" height="320"/></svg>
+      <figcaption>示意图：深色手机端。顶部是折算总资产，其下依次是搜索框、隐藏小额开关与币种列表。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>ICO 热潮让上架币种迅速增多；以币安为代表的新一代交易所在 2017 年前后从第一天起就把手机 App 当作主入口，桌面网页反而成了“第二屏”。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>顶部为总资产折算（BTC / 法币），先给出“大概有多少”。</li>
+        <li>搜索框与“隐藏小额资产”开关，用来对抗列表过长。</li>
+        <li>每行两层信息：数量在上，折算价值在下，右对齐便于纵向比较。</li>
+        <li>深色主题配单一强调色，适合行情类应用长时间盯盘。</li>
+        <li>币种图标成为识别主线索，替代了纯文字代码。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>列表越来越长；折算价来源不透明；新币的充提状态（如维护中）容易被忽略；后来出现的多链同名币让用户很难分清该走哪条网络。</p>
+      <div class="legacy"><b>留下的遗产：</b>“总资产 + 列表”成为默认信息结构；折算值成为用户理解资产的第一入口。</div>
+      <div class="swatch"><i style="background:#12151b"></i><i style="background:#1e2329"></i><i style="background:#e8a317"></i><i style="background:#848e9c"></i><em>深色底、面板灰、单一强调色</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e4">
+  <h2>分层账户与划转：最高频的操作变成“搬钱”</h2>
+  <p class="when">约 2018–2019 · 杠杆、合约、法币买币陆续上线</p>
+  <p class="gist">功能变多之后，钱包被拆成资金、现货、杠杆、合约等账户，用户不得不学会在它们之间划转。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="分层账户与划转界面示意"><use href="#m4" width="480" height="320"/></svg>
+      <figcaption>示意图：左侧是五个账户卡片，右侧是划转面板，下方汇总安全设置状态。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>杠杆与永续合约上线后，交易所需要把不同风险的资金隔离开；同一时期的安全事件与监管要求，也促使平台补上更完整的风控与身份验证。钱包不再是一个池子，而是一栋有多个房间的房子。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>账户卡片：每个账户有自己的颜色标记和余额。</li>
+        <li>划转弹窗：从哪里、到哪里、多少、“全部”，成为最常用的组件。</li>
+        <li>提现地址白名单、防钓鱼码、谷歌验证器 / 短信双重验证，形成“安全设置”清单。</li>
+        <li>提现额度与身份认证等级被直接写在页面上。</li>
+        <li>整体转向“专业交易台”气质：信息更密，蓝色与金色成为常见搭配。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>钱到底在哪个账户里，常常要靠点开几个页面才能找到；划转本身是额外一步；安全设置分散在多处；风控延迟提现时，用户得不到足够的解释。</p>
+      <div class="legacy"><b>留下的遗产：</b>“账户分层”的心智模型；“安全中心”成为独立入口。</div>
+      <div class="swatch"><i style="background:#0b1f3a"></i><i style="background:#2f6fd0"></i><i style="background:#e0a526"></i><i style="background:#f4f7fa"></i><em>海军蓝、交易蓝、金色强调</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e5">
+  <h2>财富首页：从“你有什么”到“你还能做什么”</h2>
+  <p class="when">约 2020–2021 · DeFi 热潮与 NFT 热潮</p>
+  <p class="gist">资产页开始承担分发的角色：理财、质押、新币申购、NFT，都在钱包首页排好了队。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="财富首页示意"><use href="#m5" width="480" height="320"/></svg>
+      <figcaption>示意图：渐变总资产卡、四个快捷操作、活期理财、新币申购与 NFT 入口。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>DeFi 热潮带来了对“收益”的普遍关注，NFT 又带来新的资产类型。交易所相继推出活期与定期理财、流动性挖矿、新币申购和 NFT 市场，钱包首页必须为这些业务留出位置。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>总资产卡片配迷你走势图与“今日盈亏”。</li>
+        <li>快捷操作行：充币、提币、划转、买币，覆盖八成日常需求。</li>
+        <li>收益模块：年化数字大而醒目，配“申购”按钮。</li>
+        <li>活动横幅、进度条、NFT 缩略图，让首页更像一个金融超市。</li>
+        <li>更多渐变、圆角和卡片，视觉语言靠近银行与理财 App。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>入口过多，主要任务被淹没；年化数字过于突出，容易让人低估风险；首页越来越像运营位，缺乏真正的个性化。</p>
+      <div class="legacy"><b>留下的遗产：</b>“收益”成为钱包的一等公民；首页从工具页变成分发页。</div>
+      <div class="swatch"><i style="background:#1c6fd1"></i><i style="background:#0b8a85"></i><i style="background:#e0a526"></i><i style="background:#8a5cd6"></i><em>渐变蓝绿、收益青、NFT 紫</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e6">
+  <h2>交易所里的 Web3 钱包：托管与自托管并排放着</h2>
+  <p class="when">约 2022–2024 · 多家交易所推出或整合自托管钱包</p>
+  <p class="gist">App 顶部出现了一个分段控件，一边是“交易所”，一边是“Web3 钱包”，责任边界第一次被放进主界面。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="交易所与Web3双模式界面示意"><use href="#m6" width="480" height="320"/></svg>
+      <figcaption>示意图：顶部模式切换、钱包地址、网络芯片、代币列表、功能入口与授权提醒。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>2022 年底 FTX 事件之后，“自己保管私钥”成为公共话题；同时多链资产、去中心化交易和链上申购的需求上升。OKX、币安、Bitget 等平台在 2022 至 2024 年前后陆续推出或整合了内置的 Web3 钱包。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>顶部分段控件在“交易所账户”与“Web3 钱包”之间切换。</li>
+        <li>网络芯片（ETH / BSC / SOL 等）成为新的一级筛选。</li>
+        <li>钱包地址、助记词备份流程与“已备份”状态成为核心元素。</li>
+        <li>功能入口网格：兑换、质押、跨链、授权管理。</li>
+        <li>交易前展示网络费用估算，对未知合约或无限授权给出提醒。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>两种模式规则不同（能否找回？谁负责？），用户容易混淆；助记词备份既枯燥又高风险；授权与钓鱼合约防不胜防；网络与手续费选择门槛较高。</p>
+      <div class="legacy"><b>留下的遗产：</b>设计任务从“展示余额”转向“说清责任边界”。</div>
+      <div class="swatch"><i style="background:#e4e9f0"></i><i style="background:#16222E"></i><i style="background:#fff4d9"></i><i style="background:#2aa36b"></i><em>浅灰底、墨色主按钮、警示黄、在线绿</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e7">
+  <h2>无助记词与交易预览：让“自托管”不再意味着抄十二个词</h2>
+  <p class="when">约 2023–2025 · MPC、账户抽象与通行密钥</p>
+  <p class="gist">密钥被拆成多份、身份换成生物识别、签名前先告诉你会发生什么——安全界面从“输入验证码”变成“看清后果”。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="创建钱包与交易确认界面示意"><use href="#m7" width="480" height="320"/></svg>
+      <figcaption>示意图：左为通行密钥创建钱包与密钥分片，右为交易确认页的资产变化与风险标签。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>ERC-4337 于 2023 年 3 月在以太坊主网上线，为账户抽象提供了一条路径；通行密钥（Passkey）被主流系统与浏览器广泛支持；2025 年的以太坊 Pectra 升级引入 EIP-7702，使普通地址也能获得智能账户能力。MPC 方案则把私钥拆成多个分片，分别由设备、云端和服务方持有。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>用面容或指纹创建钱包，流程里不再出现助记词。</li>
+        <li>用简单图示解释密钥分片：设备、云端、服务，任意两份可恢复。</li>
+        <li>交易预览：先用“− 100 USDT / + 0.031 ETH”告诉你会发生什么。</li>
+        <li>风险标签：合约是否已验证、是否首次交互、是否为无限授权。</li>
+        <li>网络费用代付或改用稳定币支付，减少“没有 Gas 币”的卡点。</li>
+      </ul>
+      <h3>用户痛点</h3>
+      <p>“谁能帮我恢复”的解释成本高；分片持有方之间的信任模型难以一句话讲清；换设备流程复杂；进阶用户想看到底层细节，却常被简化界面挡住。</p>
+      <div class="legacy"><b>留下的遗产：</b>“预览结果”成为高风险操作的标准前置步骤。</div>
+      <div class="swatch"><i style="background:#dcebe9"></i><i style="background:#0b8a85"></i><i style="background:#c4452f"></i><i style="background:#1f8a55"></i><em>浅青底、主色青、支出红、收入绿</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="era" id="e8">
+  <h2>超级应用、稳定币与对话入口：正在形成的下一步</h2>
+  <p class="when">2025 起 · 趋势仍在演变，形态尚未收敛</p>
+  <p class="gist">钱包成为账户、支付、投资与对话的合体；稳定币余额像现金一样当主角，指令可以直接说出来。</p>
+  <div class="era-body">
+    <figure>
+      <svg viewBox="0 0 480 320" role="img" aria-label="超级应用与对话入口示意"><use href="#m8" width="480" height="320"/></svg>
+      <figcaption>示意图：稳定币余额、虚拟卡、收款转账支付入口，以及一段“说出意图 → 确认卡片”的对话。</figcaption>
+    </figure>
+    <div class="txt">
+      <h3>背景</h3>
+      <p>稳定币的规模与支付场景在扩张，加密卡、即时通讯内的小程序钱包（如 Telegram 生态）和 AI 助手相继接入。“意图式交易”的思路也在兴起：用户描述目标，系统负责选择路径。这一阶段是正在发生的趋势，本页只做方向性的描述。</p>
+      <h3>界面特征</h3>
+      <ul>
+        <li>以法币计价的稳定币余额作为主视觉，弱化币种与网络。</li>
+        <li>卡片与支付入口进入首页，钱包从投资工具变成日常账户。</li>
+        <li>对话输入框：说出意图，生成可确认、可修改的“意图确认卡”。</li>
+        <li>跨链与手续费被隐藏在后台，只在异常时提示。</li>
+        <li>首页依据用户行为个性化，而不是全员同一版。</li>
+      </ul>
+      <h3>风险与争议</h3>
+      <p>AI 可能误解意图；自动执行的权限边界如何划定；不同地区的合规要求让功能碎片化；复杂度隐藏到什么程度才算负责任，仍没有共识。</p>
+      <div class="legacy"><b>值得关注：</b>确认卡是否清楚呈现“卖出什么、买入什么、多少费用”，将决定这类入口是否真正值得信任。</div>
+      <div class="swatch"><i style="background:#0d1b2e"></i><i style="background:#182b47"></i><i style="background:#7fe0c8"></i><i style="background:#e2763f"></i><em>深海蓝、面板蓝、薄荷、卡片橙</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="threads" id="lines">
+  <h2>回看：贯穿十五年的五条主线</h2>
+  <p class="sub">八个阶段各自的界面不同，但仔细看，改变的其实是下面这五件事。</p>
+
+  <div class="thread">
+    <div>
+      <h3>一、信息结构：从一张表到一句话</h3>
+      <p>最早只有表格；然后按操作分页；币种多了变成列表；业务多了拆成账户；再往后被聚合为首页，又分出托管与自托管两种模式，最新的尝试则是直接用一句话发起操作。</p>
+      <p>每一次变化都是在回答同一个矛盾：功能不断增加，而用户的注意力没有增加。</p>
+    </div>
+    <div class="diagram"><svg viewBox="0 0 844 130" role="img" aria-label="信息结构演变流程图"><rect x="0" y="28" width="100" height="52" rx="8" fill="#b9bcc0"/><text x="50.0" y="59" font-size="14" font-weight="700" fill="#16222E" text-anchor="middle">余额表</text><text x="50.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2010</text><path d="M104 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="124" y="28" width="100" height="52" rx="8" fill="#0f6e8c"/><text x="174.0" y="59" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">充提分页</text><text x="174.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2013</text><path d="M228 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="248" y="28" width="100" height="52" rx="8" fill="#e8a317"/><text x="298.0" y="59" font-size="14" font-weight="700" fill="#16222E" text-anchor="middle">币种列表</text><text x="298.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2016</text><path d="M352 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="372" y="28" width="100" height="52" rx="8" fill="#2f6fd0"/><text x="422.0" y="59" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">分层账户</text><text x="422.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2018</text><path d="M476 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="496" y="28" width="100" height="52" rx="8" fill="#8a5cd6"/><text x="546.0" y="59" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">财富首页</text><text x="546.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2020</text><path d="M600 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="620" y="28" width="100" height="52" rx="8" fill="#16222E"/><text x="670.0" y="59" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">双模式</text><text x="670.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2022</text><path d="M724 54 h16 m-5 -4 l5 4 l-5 4" fill="none" stroke="#7a8894" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="744" y="28" width="100" height="52" rx="8" fill="#0b8a85"/><text x="794.0" y="59" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">对话入口</text><text x="794.0" y="106" font-size="12" fill="#7a8894" text-anchor="middle">2025</text></svg></div>
+  </div>
+
+  <div class="thread">
+    <div>
+      <h3>二、安全交互：从“信任页面”到“看清后果”</h3>
+      <p>早期只有登录密码；随后出现邮件确认、二次验证、地址白名单与防钓鱼码；再往后，界面开始在签名前模拟交易结果，并用风险标签提示异常；最近则把身份验证交给通行密钥，把密钥保管交给分片机制。</p>
+      <p>趋势很清楚：防护从“多设几道门”转向“让用户在按下确认前知道自己在确认什么”。</p>
+    </div>
+    <div class="diagram"><svg viewBox="0 0 676 230" role="img" aria-label="安全交互演变阶梯图"><rect x="0" y="140" width="106" height="60" rx="6" fill="#b9bcc0"/><text x="53.0" y="164" font-size="13" font-weight="700" fill="#16222E" text-anchor="middle">登录密码</text><text x="53.0" y="182" font-size="10.5" fill="#16222E" fill-opacity=".85" text-anchor="middle">仅账户口令</text><text x="53.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2010</text><rect x="114" y="116" width="106" height="84" rx="6" fill="#7fb0c4"/><text x="167.0" y="140" font-size="13" font-weight="700" fill="#16222E" text-anchor="middle">邮件确认</text><text x="167.0" y="158" font-size="10.5" fill="#16222E" fill-opacity=".85" text-anchor="middle">提现链接</text><text x="167.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2013</text><rect x="228" y="92" width="106" height="108" rx="6" fill="#4c9bb5"/><text x="281.0" y="116" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">二次验证</text><text x="281.0" y="134" font-size="10.5" fill="#ffffff" fill-opacity=".85" text-anchor="middle">短信 / 验证器</text><text x="281.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2015</text><rect x="342" y="68" width="106" height="132" rx="6" fill="#2f6fd0"/><text x="395.0" y="90" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">白名单与</text><text x="395.0" y="106" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">防钓鱼码</text><text x="395.0" y="124" font-size="10.5" fill="#ffffff" fill-opacity=".85" text-anchor="middle">限定地址、识别官方</text><text x="395.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2018</text><rect x="456" y="44" width="106" height="156" rx="6" fill="#0b8a85"/><text x="509.0" y="68" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">风险预览</text><text x="509.0" y="86" font-size="10.5" fill="#ffffff" fill-opacity=".85" text-anchor="middle">交易模拟与标签</text><text x="509.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2022</text><rect x="570" y="20" width="106" height="180" rx="6" fill="#16222E"/><text x="623.0" y="42" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">通行密钥</text><text x="623.0" y="58" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">与分片</text><text x="623.0" y="76" font-size="10.5" fill="#ffffff" fill-opacity=".85" text-anchor="middle">无助记词</text><text x="623.0" y="220" font-size="12" fill="#7a8894" text-anchor="middle">约 2024</text></svg></div>
+  </div>
+
+  <div class="thread">
+    <div>
+      <h3>三、复杂度管理：把术语翻译成人话</h3>
+      <p>“确认数”变成进度条，“划转”变成从 A 到 B，“授权”变成待检查提醒，“Gas”变成一行费用估算。好的设计既不隐瞒事实，也不强迫用户学习行话。</p>
+      <p>翻译的代价是细节可能丢失，所以成熟的产品通常会给进阶用户留一个“查看详情”的出口。</p>
+    </div>
+    <div>
+      <div class="tbl-wrap" style="margin:0">
+        <table style="min-width:520px">
+          <thead><tr><th>底层概念</th><th>早期呈现</th><th>如今呈现</th></tr></thead>
+          <tbody>
+            <tr><td>区块确认</td><td>“Confirmations: 2”</td><td>2 / 3 进度条与预计时间</td></tr>
+            <tr><td>资金隔离</td><td>无</td><td>账户卡片 + 划转弹窗</td></tr>
+            <tr><td>代币授权</td><td>无</td><td>授权管理页与额度提醒</td></tr>
+            <tr><td>网络手续费</td><td>提现页固定扣除</td><td>确认页显示费用，可用稳定币支付</td></tr>
+            <tr><td>私钥备份</td><td>不涉及</td><td>助记词 → 通行密钥 + 分片</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="thread">
+    <div>
+      <h3>四、托管边界：责任从隐形到可见</h3>
+      <p>在前四个阶段，用户几乎不需要关心“谁持有私钥”，因为答案永远是平台。到了双模式阶段，这个问题被放进界面：切换开关的两侧，责任不一样。</p>
+      <p>这对设计提出了新要求：在用户切换的那一刻，用一两句话说清“你现在自己负责什么”。</p>
+    </div>
+    <div>
+      <div class="tbl-wrap" style="margin:0">
+        <table style="min-width:520px">
+          <thead><tr><th></th><th>交易所账户（托管）</th><th>Web3 钱包（自托管 / MPC）</th></tr></thead>
+          <tbody>
+            <tr><td>谁保管密钥</td><td>平台</td><td>用户（或分片由多方持有）</td></tr>
+            <tr><td>找回方式</td><td>客服与身份验证</td><td>备份、分片或社交恢复</td></tr>
+            <tr><td>误转后</td><td>视平台规则，个别情况可协助</td><td>链上交易通常不可撤销</td></tr>
+            <tr><td>主要风险</td><td>平台安全与账户被盗</td><td>钓鱼授权、备份丢失</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="thread">
+    <div>
+      <h3>五、视觉语言：一路换过的色彩</h3>
+      <p>系统灰传达“工具”，蓝白扁平传达“可信”，深色加单一强调色传达“交易”，渐变卡片传达“理财”，浅灰底加克制的黑色传达“工具箱”，深海蓝加薄荷传达“下一代”。视觉并非装饰，它一直在替产品说明自己想被当作什么。</p>
+    </div>
+    <div class="palettes">
+      <div class="prow"><span>2010–13</span><div class="bar"><i style="background:#b9bcc0"></i><i style="background:#ece9d8"></i><i style="background:#2a5db0"></i><i style="background:#d2452f"></i></div></div>
+      <div class="prow"><span>2013–15</span><div class="bar"><i style="background:#dfe7ee"></i><i style="background:#0f6e8c"></i><i style="background:#2aa36b"></i><i style="background:#fff"></i></div></div>
+      <div class="prow"><span>2016–17</span><div class="bar"><i style="background:#12151b"></i><i style="background:#1e2329"></i><i style="background:#e8a317"></i><i style="background:#848e9c"></i></div></div>
+      <div class="prow"><span>2018–19</span><div class="bar"><i style="background:#0b1f3a"></i><i style="background:#2f6fd0"></i><i style="background:#e0a526"></i><i style="background:#f4f7fa"></i></div></div>
+      <div class="prow"><span>2020–21</span><div class="bar"><i style="background:#1c6fd1"></i><i style="background:#0b8a85"></i><i style="background:#e0a526"></i><i style="background:#8a5cd6"></i></div></div>
+      <div class="prow"><span>2022–24</span><div class="bar"><i style="background:#e4e9f0"></i><i style="background:#16222E"></i><i style="background:#fff4d9"></i><i style="background:#2aa36b"></i></div></div>
+      <div class="prow"><span>2023–25</span><div class="bar"><i style="background:#dcebe9"></i><i style="background:#0b8a85"></i><i style="background:#c4452f"></i><i style="background:#1f8a55"></i></div></div>
+      <div class="prow"><span>2025 起</span><div class="bar"><i style="background:#0d1b2e"></i><i style="background:#182b47"></i><i style="background:#7fe0c8"></i><i style="background:#e2763f"></i></div></div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:56px">八个阶段对照表</h2>
+  <p class="sub">把八个阶段并排放在一起，可以更清楚地看到重心如何转移。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>阶段</th><th>资产核心对象</th><th>主要动作</th><th>安全手段</th><th>托管形态</th><th>主要痛点</th></tr></thead>
+      <tbody>
+        <tr><td>余额表<br>2010–13</td><td>BTC 余额行</td><td>复制地址、提交提现</td><td>登录密码</td><td>平台托管</td><td>地址出错不可逆、状态不透明</td></tr>
+        <tr><td>网页钱包<br>2013–15</td><td>单币种资金页</td><td>扫码充值、确认提现</td><td>邮件确认</td><td>平台托管</td><td>邮件延迟、二维码风险</td></tr>
+        <tr><td>币种列表<br>2016–17</td><td>折算总资产 + 币种列表</td><td>搜索、查看、充提</td><td>短信 / 验证器</td><td>平台托管</td><td>列表过长、多链混淆</td></tr>
+        <tr><td>分层账户<br>2018–19</td><td>多个账户</td><td>划转、提现</td><td>白名单、防钓鱼码</td><td>平台托管</td><td>资金位置难找、设置分散</td></tr>
+        <tr><td>财富首页<br>2020–21</td><td>资产 + 收益 + 活动</td><td>申购、理财、参与活动</td><td>风控与限额</td><td>平台托管</td><td>入口过密、风险提示不足</td></tr>
+        <tr><td>双模式<br>2022–24</td><td>账户 / 钱包地址与网络</td><td>兑换、授权、跨链</td><td>助记词备份、授权提醒</td><td>托管 + 自托管</td><td>责任边界不清、备份挫败</td></tr>
+        <tr><td>无助记词<br>2023–25</td><td>智能账户与密钥分片</td><td>预览后确认</td><td>通行密钥、交易预览、风险标签</td><td>自托管 / MPC</td><td>恢复机制难解释</td></tr>
+        <tr><td>超级应用<br>2025 起</td><td>稳定币余额 + 卡 + 对话</td><td>支付、说出意图</td><td>意图确认卡、权限边界</td><td>多种形态并存</td><td>AI 误解、合规碎片化</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>给设计者的六条启示</h2>
+  <p class="sub">这些是从演变过程中总结出的做法，供参考，也欢迎按自己的场景取舍。</p>
+  <div class="lessons">
+    <div><h4>先给结论，再给明细</h4><p>无论是折算总资产，还是交易前的资产变化预览，用户总是先想知道“大概是什么结果”。</p></div>
+    <div><h4>把不可逆的一步放到最后</h4><p>地址核对、网络选择、金额确认都可以做成前置步骤；最后一个按钮应当是用户已经看懂后的确认，而不是探索。</p></div>
+    <div><h4>状态要可见</h4><p>从早期“不知道有没有提交成功”，到进度条与处理中标签，可见的状态是信任感的来源。</p></div>
+    <div><h4>别让首页替所有人说话</h4><p>入口越多，主任务越容易被淹没。按用户目标动态排序，比一味堆放更有效。</p></div>
+    <div><h4>切换模式时说清责任</h4><p>托管与自托管的差别，应在切换发生的那一刻用一两句话讲清，而不是藏在帮助文档里。</p></div>
+    <div><h4>简化，但留一个出口</h4><p>给进阶用户保留查看原始交易信息、合约地址与权限详情的入口，简化才不会变成隐瞒。</p></div>
+  </div>
+
+  <p class="note">说明：本页所有界面均为原创示意图，用来概括各阶段的典型设计特征，并非任何具体产品的截图；年份为大致划分，不同平台的实际推进节奏不同。涉及的技术与事件（如 ERC-4337、Pectra 升级、FTX 事件）仅作背景交代。第八阶段描述的是正在发生的趋势，后续可能变化。</p>
+</section>
+
+</main>
+</div>
+
+<footer></footer>
+
+<script>
+(function(){
+  var items=document.querySelectorAll('.rail li');
+  var map={};
+  items.forEach(function(li){map[li.getAttribute('data-t')]=li;});
+  var ids=Object.keys(map);
+  if(!('IntersectionObserver' in window)) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        items.forEach(function(li){li.classList.remove('on');});
+        var li=map[e.target.id]; if(li) li.classList.add('on');
+      }
+    });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  ids.forEach(function(id){var el=document.getElementById(id); if(el) io.observe(el);});
+})();
+</script>
+</body>
+</html>
