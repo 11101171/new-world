@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go 注意事项汇总</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --card:#151b23;
+    --border:#2a3139;
+    --text:#e6edf3;
+    --muted:#9aa4af;
+    --accent:#58a6ff;
+    --accent2:#79c0ff;
+    --code-bg:#1b2129;
+    --tag-bg:#1f2937;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;
+  }
+  header{
+    padding:40px 24px 24px;
+    text-align:center;
+    border-bottom:1px solid var(--border);
+  }
+  header h1{
+    margin:0 0 8px;
+    font-size:28px;
+    color:#fff;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:24px 16px 80px;
+  }
+  nav{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 20px;
+    margin-bottom:32px;
+  }
+  nav h2{
+    margin:0 0 10px;
+    font-size:15px;
+    color:var(--accent2);
+  }
+  nav ol{
+    margin:0;
+    padding-left:20px;
+    columns:2;
+    column-gap:24px;
+  }
+  nav li{
+    margin-bottom:6px;
+    font-size:13.5px;
+  }
+  nav a{
+    color:var(--text);
+    text-decoration:none;
+  }
+  nav a:hover{
+    color:var(--accent);
+  }
+  section.card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:22px 24px;
+    margin-bottom:20px;
+    scroll-margin-top:16px;
+  }
+  section.card h2{
+    margin:0 0 4px;
+    font-size:18px;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;height:26px;
+    border-radius:6px;
+    background:var(--tag-bg);
+    color:var(--accent2);
+    font-size:13px;
+    flex-shrink:0;
+  }
+  .q{
+    color:var(--muted);
+    font-size:13.5px;
+    margin:0 0 14px;
+    padding-left:34px;
+  }
+  .content{
+    padding-left:34px;
+  }
+  .content p{
+    margin:0 0 10px;
+    font-size:14.5px;
+  }
+  .content ul{
+    margin:0 0 10px;
+    padding-left:20px;
+    font-size:14.5px;
+  }
+  .content li{
+    margin-bottom:4px;
+  }
+  .key{
+    background:rgba(88,166,255,0.1);
+    border-left:3px solid var(--accent);
+    padding:10px 14px;
+    border-radius:4px;
+    font-size:14px;
+    margin:10px 0;
+  }
+  code{
+    background:var(--code-bg);
+    padding:2px 6px;
+    border-radius:4px;
+    font-family:"SF Mono",Consolas,Monaco,monospace;
+    font-size:13px;
+    color:#ffa657;
+  }
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 16px;
+    overflow-x:auto;
+    font-size:13px;
+    margin:10px 0;
+  }
+  pre code{
+    background:none;
+    padding:0;
+    color:#c9d1d9;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0;
+    font-size:13.5px;
+  }
+  th,td{
+    border:1px solid var(--border);
+    padding:8px 10px;
+    text-align:left;
+  }
+  th{
+    background:var(--tag-bg);
+    color:var(--accent2);
+  }
+  .tags{
+    padding-left:34px;
+    margin-top:10px;
+  }
+  .tag{
+    display:inline-block;
+    background:var(--tag-bg);
+    color:var(--muted);
+    font-size:11.5px;
+    padding:3px 8px;
+    border-radius:12px;
+    margin:2px 4px 2px 0;
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    padding:20px;
+  }
+  @media (max-width:600px){
+    nav ol{columns:1;}
+    .q,.content,.tags{padding-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Go 注意事项汇总</h1>
+  <p>语言设计 · 并发与内存模型 · Goroutine 实战踩坑</p>
+</header>
+
+<div class="wrap">
+
+<nav>
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#q1">var 与 := 的设计</a></li>
+    <li><a href="#q2">panic / fatal / recover</a></li>
+    <li><a href="#q3">指针接收者与值接收者</a></li>
+    <li><a href="#q4">GMP 调度模型</a></li>
+    <li><a href="#q5">TCMalloc 多级缓存思想</a></li>
+    <li><a href="#q6">逃逸分析</a></li>
+    <li><a href="#q7">为什么有堆和栈</a></li>
+    <li><a href="#q8">并发三色标记与写屏障</a></li>
+    <li><a href="#q9">map 拉链式哈希表</a></li>
+    <li><a href="#q10">map 非并发安全</a></li>
+    <li><a href="#q11">无缓冲 channel 为什么阻塞</a></li>
+    <li><a href="#q12">happens-before</a></li>
+    <li><a href="#q13">Web 程序里的 happens-before</a></li>
+    <li><a href="#q14">公用 Service 的加载方式</a></li>
+    <li><a href="#q15">Worker Pool：range vs select / 死锁</a></li>
+    <li><a href="#q16">单向 channel</a></li>
+    <li><a href="#q17">闭包捕获循环变量</a></li>
+    <li><a href="#q18">Pipeline 的 channel 关闭传播</a></li>
+    <li><a href="#q19">context.cancel 的本质</a></li>
+    <li><a href="#q20">select 超时验证 goroutine 退出</a></li>
+    <li><a href="#q21">channel 什么时候不需要 close</a></li>
+  </ol>
+</nav>
+
+<section class="card" id="q1">
+  <h2><span class="num">1</span>为什么 Go 同时有 var 和 :=</h2>
+  <p class="q">问：为什么 Go 会有这两种变量声明方式？</p>
+  <div class="content">
+    <p><code>var</code> 是显式声明：包级别只能用它（顶层语句必须以关键字开头，便于编译器快速解析），且能表达"零值"和显式类型。<code>:=</code> 是短变量声明，只能用在函数内部，为高频的局部变量场景而生，配合多返回值的错误处理惯用法（<code>v, err := f()</code>）尤其方便。</p>
+    <div class="key">设计哲学：让常见情况简短，让特殊情况显式。实践惯例——函数内默认用 <code>:=</code>，需要零值/显式类型/包级别时用 <code>var</code>。</div>
+    <p>代价：<code>:=</code> 的"至少一个新变量"规则容易造成<strong>变量遮蔽（shadowing）</strong>，是常见 bug 来源。</p>
+  </div>
+  <div class="tags"><span class="tag">语法设计</span><span class="tag">变量声明</span></div>
+</section>
+
+<section class="card" id="q2">
+  <h2><span class="num">2</span>panic / fatal / recover 不是"三种错误"</h2>
+  <p class="q">问：Go 为什么要设置这三种"错误"？</p>
+  <div class="content">
+    <p>纠正概念：这三者不是错误类型，Go 真正的错误只有 <code>error</code> 接口。</p>
+    <table>
+      <tr><th></th><th>性质</th><th>用途</th></tr>
+      <tr><td>error</td><td>接口</td><td>可预期的失败，调用者显式处理</td></tr>
+      <tr><td>panic</td><td>内置函数</td><td>不可恢复的程序 bug，沿调用栈展开并执行 defer</td></tr>
+      <tr><td>recover</td><td>内置函数</td><td>只能在 defer 中调用，截住 panic，防止服务崩溃</td></tr>
+      <tr><td>fatal</td><td>非内置，log.Fatal / 运行时 fatal error</td><td>无法继续运行，不能 recover，直接 os.Exit</td></tr>
+    </table>
+    <div class="key">经验法则：能预见的失败用 error；代码 bug 用 panic；服务边界防崩溃用 recover；main 启动失败用 log.Fatal。</div>
+  </div>
+  <div class="tags"><span class="tag">错误处理</span></div>
+</section>
+
+<section class="card" id="q3">
+  <h2><span class="num">3</span>指针接收者 vs 值接收者</h2>
+  <p class="q">问：为什么函数命名有指针和非指针两种方式？</p>
+  <div class="content">
+    <p>本质是方法的<strong>接收者（receiver）</strong>。Go 参数传递永远是值拷贝：值接收者操作副本，指针接收者操作原对象地址。</p>
+    <ul>
+      <li>需要修改接收者、结构体很大、含不可拷贝字段（如 Mutex）→ 用指针</li>
+      <li>小型不可变值（如 time.Time）→ 用值</li>
+      <li>同一类型的方法风格要统一</li>
+    </ul>
+    <div class="key">方法集规则：T 的方法集只含值接收者方法；*T 的方法集含全部。这决定了谁能实现接口——<code>var _ Incer = Counter{}</code> 若 Inc 是指针方法会编译错误。</div>
+  </div>
+  <div class="tags"><span class="tag">方法</span><span class="tag">接口</span></div>
+</section>
+
+<section class="card" id="q4">
+  <h2><span class="num">4</span>为什么需要 GMP 调度模型</h2>
+  <p class="q">问：GMP 模式有什么优势？</p>
+  <div class="content">
+    <p>G=Goroutine（用户态协程），M=系统线程，P=逻辑处理器（持有本地队列和分配缓存）。M 必须绑定 P 才能执行 G，实现 M:N 调度。</p>
+    <p>早期 GM 模型只有全局队列，锁竞争严重；引入 P 后把资源和队列下放到 P 上：</p>
+    <ul>
+      <li>本地队列大多数调度无需加锁</li>
+      <li>工作窃取（work stealing）实现负载均衡</li>
+      <li>系统调用阻塞时 P 可被摘走交给别的 M（hand off），不浪费资源</li>
+      <li>netpoller 让网络 I/O 不占用线程，支持同步写法获得异步性能</li>
+      <li>基于信号的异步抢占，防止死循环饿死其他 G</li>
+    </ul>
+  </div>
+  <div class="tags"><span class="tag">调度器</span><span class="tag">并发</span></div>
+</section>
+
+<section class="card" id="q5">
+  <h2><span class="num">5</span>内存分配借鉴 TCMalloc 的多级缓存</h2>
+  <p class="q">问：为什么要借鉴这种思想？</p>
+  <div class="content">
+    <p>目标同样是避免多核下全局堆分配的锁竞争。核心思想：按对象大小分级（size class）+ 线程本地缓存 + 多级结构。</p>
+    <table>
+      <tr><th>层级</th><th>结构</th><th>特点</th></tr>
+      <tr><td>一级</td><td>mcache</td><td>每个 P 一个，分配无锁</td></tr>
+      <tr><td>二级</td><td>mcentral</td><td>按 size class 共享，需加锁</td></tr>
+      <tr><td>三级</td><td>mheap</td><td>全局堆，向 OS 申请内存</td></tr>
+    </table>
+    <p>mcache 挂在 <strong>P</strong> 上而非 M 上，因为 P 数量固定可控，M 会因系统调用频繁增减。Go 与 TCMalloc 的差异在于：Go 有 GC，span 记录 bitmap 配合标记清扫，不需要主动搬运缓存对象。</p>
+  </div>
+  <div class="tags"><span class="tag">内存分配</span><span class="tag">GC</span></div>
+</section>
+
+<section class="card" id="q6">
+  <h2><span class="num">6</span>逃逸分析：为什么会逃逸到堆</h2>
+  <p class="q">问（配图表格）：返回局部变量指针、赋值给 interface、闭包捕获、大小未知、存入堆/全局/channel，为什么会逃逸？</p>
+  <div class="content">
+    <div class="key">核心原理：编译器判断变量生命周期是否可能超过创建它的函数。可能超过，或无法证明不会超过 → 放堆上。</div>
+    <ul>
+      <li><strong>返回局部变量指针</strong>：函数返回后栈帧回收，但调用者还持有地址，必须放堆</li>
+      <li><strong>赋值给 interface</strong>：接口内部存指针，编译器无法确定是否被长期持有或反射使用，保守放堆</li>
+      <li><strong>闭包捕获</strong>：闭包被返回后仍存活，捕获的变量必须跟着活下去</li>
+      <li><strong>大小未知/过大</strong>：栈帧大小必须编译期确定，变量大小放不进栈</li>
+      <li><strong>存入堆对象/全局变量/channel</strong>：被更长寿的容器引用，自己也必须更长寿</li>
+    </ul>
+    <p>查看方式：<code>go build -gcflags="-m" main.go</code></p>
+  </div>
+  <div class="tags"><span class="tag">逃逸分析</span><span class="tag">内存</span></div>
+</section>
+
+<section class="card" id="q7">
+  <h2><span class="num">7</span>为什么 Go 也有堆和栈</h2>
+  <p class="q">问：堆和栈各自解决什么问题？</p>
+  <div class="content">
+    <p>栈快但只能存活到函数返回；堆灵活但分配/回收有代价。Go 的特别之处：程序员不显式选择，编译器通过逃逸分析自动决定能放栈就放栈。</p>
+    <div class="key">goroutine 栈初始仅约 2KB，可动态扩容（搬迁并修正指针），用不完会收缩——这也是栈上变量地址不能被堆对象长期持有的原因之一。</div>
+  </div>
+  <div class="tags"><span class="tag">堆栈</span><span class="tag">性能</span></div>
+</section>
+
+<section class="card" id="q8">
+  <h2><span class="num">8</span>并发标记与写屏障</h2>
+  <p class="q">问：标记与用户代码并发执行，用户代码修改指针为什么会破坏正确性？</p>
+  <div class="content">
+    <p>三色标记：白（未访问，最终回收）、灰（已发现待扫描）、黑（已扫描完）。漏标需同时满足两个条件：</p>
+    <ol>
+      <li>黑对象新增了对白对象的引用</li>
+      <li>所有从灰对象到该白对象的路径被断开</li>
+    </ol>
+    <p>满足即导致存活对象被误回收（比内存泄漏更严重的悬空指针）。</p>
+    <div class="key">解决方案：写屏障。Go 1.8+ 使用<strong>混合写屏障</strong>（删除屏障 + 栈灰色时的插入屏障），既维持三色不变式，又避免重新扫描栈，把 STW 压到微秒级，代价是少量"浮动垃圾"。</div>
+  </div>
+  <div class="tags"><span class="tag">GC</span><span class="tag">写屏障</span></div>
+</section>
+
+<section class="card" id="q9">
+  <h2><span class="num">9</span>map 是拉链式哈希表</h2>
+  <p class="q">问：如何理解？</p>
+  <div class="content">
+    <p>Go 1.23 及以前：每个桶（bucket）存 8 个 kv，存不下挂<strong>溢出桶</strong>形成链。桶内存 tophash（哈希高 8 位）加速比较，key/value 分开连续存放减少内存对齐浪费。扩容分负载因子超限（翻倍扩容）和溢出桶过多（等量扩容），且是<strong>渐进式</strong>迁移。</p>
+    <div class="key">Go 1.24 起默认改为 Swiss Table（开放寻址 + 分组控制字 + SIMD 加速），语义不变（无序、非并发安全、不可取地址），性能更优。</div>
+  </div>
+  <div class="tags"><span class="tag">map</span><span class="tag">哈希表</span></div>
+</section>
+
+<section class="card" id="q10">
+  <h2><span class="num">10</span>map 非并发安全</h2>
+  <p class="q">问：如何更好地理解？</p>
+  <div class="content">
+    <p>一次 <code>m[k]=v</code> 实际由多步组成（算 hash、找槽位、写入、计数、可能扩容），多 goroutine 交错执行会破坏内部结构。Go 用 <code>flags</code> 标记位尽力检测，发现并发读写直接触发 <strong>fatal error（不可 recover）</strong>，而不是让程序带着损坏数据继续跑。</p>
+    <div class="key">规则：只读并发安全；只要有写就必须同步。常用方案：sync.RWMutex（最常用）、sync.Map（key 写一次读多/互不相交场景）、分片锁、channel 串行化。测试务必加 <code>-race</code>。</div>
+  </div>
+  <div class="tags"><span class="tag">map</span><span class="tag">并发安全</span></div>
+</section>
+
+<section class="card" id="q11">
+  <h2><span class="num">11</span>无缓冲 channel 为什么阻塞</h2>
+  <p class="q">问：为什么无缓冲 channel 会阻塞？</p>
+  <div class="content">
+    <p>无缓冲 channel 容量为 0，没有地方存数据，发送的值只能直接交到接收方手上——即 <strong>rendezvous（会合）语义</strong>：发送和接收必须同时发生。</p>
+    <div class="key">价值所在：无缓冲 channel 保证"发送成功"等价于"接收方已经拿到数据"，这是 CSP 模型"用通信实现同步"的基础，常用于 done-channel 这类完成通知。</div>
+    <table>
+      <tr><th>操作</th><th>无缓冲</th><th>有缓冲</th></tr>
+      <tr><td>发送</td><td>阻塞直到有接收者</td><td>缓冲区满才阻塞</td></tr>
+      <tr><td>接收</td><td>阻塞直到有发送者</td><td>缓冲区空才阻塞</td></tr>
+    </table>
+  </div>
+  <div class="tags"><span class="tag">channel</span><span class="tag">同步</span></div>
+</section>
+
+<section class="card" id="q12">
+  <h2><span class="num">12</span>happens-before</h2>
+  <p class="q">问：如何理解 Go 的 happens-before？</p>
+  <div class="content">
+    <p>回答"一个 goroutine 写的值，另一个 goroutine 什么时候能保证看到"。没有同步原语，普通变量的跨 goroutine 可见性和顺序都不保证（编译器重排+多核缓存）。</p>
+    <div class="key">建立 happens-before 的方式：channel 收发（发送 hb 对应接收完成）、Mutex 的 Unlock hb 下一次 Lock、WaitGroup 的 Done hb Wait 返回、Once.Do(f) hb 任意一次 Do 返回、atomic 写 hb 读到该值的读、go 语句 hb 新 goroutine 开始执行。</div>
+    <p>口诀：<strong>没有同步，就没有顺序，也没有可见性。</strong> 没有 happens-before 路径即为数据竞争，用 <code>-race</code> 检测。</p>
+  </div>
+  <div class="tags"><span class="tag">内存模型</span><span class="tag">并发</span></div>
+</section>
+
+<section class="card" id="q13">
+  <h2><span class="num">13</span>Web 程序里如何保证 happens-before</h2>
+  <p class="q">问：每个请求和全局数据如何保证可见性？</p>
+  <div class="content">
+    <table>
+      <tr><th>场景</th><th>方案</th><th>依据</th></tr>
+      <tr><td>启动后只读不变</td><td>无需同步</td><td>main hb 每个请求 go 语句</td></tr>
+      <tr><td>单个计数器/标志</td><td>atomic</td><td>原子写 hb 读</td></tr>
+      <tr><td>复杂结构读多写少</td><td>RWMutex</td><td>Unlock hb 下次 Lock</td></tr>
+      <tr><td>只需初始化一次</td><td>sync.Once</td><td>Do hb 任意 Do 返回</td></tr>
+      <tr><td>配置热更新</td><td>atomic.Pointer + copy-on-write</td><td>原子存 hb 原子读</td></tr>
+      <tr><td>请求私有数据</td><td>context.Value</td><td>不需跨请求同步</td></tr>
+    </table>
+    <div class="key">反模式：手写"检查后写入"（先判断 key 不存在再写）必须整体加锁，否则并发请求会钻空子；配置热更新要整体替换对象，不要原地改字段。</div>
+  </div>
+  <div class="tags"><span class="tag">Web</span><span class="tag">并发安全</span></div>
+</section>
+
+<section class="card" id="q14">
+  <h2><span class="num">14</span>公用 Service 应该用哪种方式加载</h2>
+  <p class="q">问：Web 里公用 service 类应该怎么加载？</p>
+  <div class="content">
+    <ul>
+      <li><strong>首选：依赖注入 + 启动时构造</strong>，构造完只读，天然无锁（main hb 每个请求 goroutine）</li>
+      <li>需要热更新的单个字段 → 单独用 atomic 包裹，不要给整个 service 加锁</li>
+      <li>内部有可变共享状态（如内存缓存）→ 只给该字段加 RWMutex，不要锁整个结构体</li>
+      <li>初始化时机不确定、只需一次 → sync.Once</li>
+    </ul>
+    <div class="key">反模式：包级全局变量 + 手写懒加载判空（数据竞争）；service 里塞 *http.Request 等请求作用域数据（并发请求会互相污染）；用全局裸变量代替依赖注入（难测试）。</div>
+  </div>
+  <div class="tags"><span class="tag">架构设计</span><span class="tag">Web</span></div>
+</section>
+
+<section class="card" id="q15">
+  <h2><span class="num">15</span>Worker Pool：range vs select，以及死锁</h2>
+  <p class="q">问1：为什么用 for range 而不是 select？<br>问2：为什么 wg.Wait() 不能直接写，会和 worker 互相等待？</p>
+  <div class="content">
+    <p><strong>①</strong> 只处理单个 channel、且想等到它关闭为止 → <code>range</code> 足够清晰；需要同时监听多个 channel 或支持取消 → 才用 <code>select</code>。</p>
+    <p><strong>②</strong> 若 <code>wg.Wait()</code> 直接写在 main 里（不开独立 goroutine），main 会卡在 Wait 上，此时没有人在消费 results。若任务数超过 results 缓冲区容量，worker 会阻塞在 <code>results&lt;-</code> 上等人来取，而 main 在等 worker 全部 Done —— 互相等待，死锁。</p>
+    <div class="key">正确做法：把 wg.Wait()+close(results) 放进独立 goroutine，让它与 main 的 range results 并发执行——"消费腾空间"和"等待后关闭"必须并发而非串行。</div>
+  </div>
+  <div class="tags"><span class="tag">Worker Pool</span><span class="tag">死锁</span></div>
+</section>
+
+<section class="card" id="q16">
+  <h2><span class="num">16</span>单向 channel（chan&lt;- / &lt;-chan）</h2>
+  <p class="q">问：如何理解 chan&lt;- int 是单向的？</p>
+  <div class="content">
+    <p>不是新类型，而是对同一个 channel 的<strong>受限视图</strong>，底层指向同一个 hchan，运行时无额外开销。箭头指向谁，数据就往谁那边走。</p>
+    <div class="key">作用：用函数签名表达契约（一看就知道只读还是只写），编译期拒绝误用；只有持有可写权限的一方才能 close，防止接收方误关闭 channel。双向可隐式转单向，但单向不能转回双向（权限只能收紧不能放宽）。</div>
+  </div>
+  <div class="tags"><span class="tag">channel</span><span class="tag">类型系统</span></div>
+</section>
+
+<section class="card" id="q17">
+  <h2><span class="num">17</span>闭包捕获循环变量的写法</h2>
+  <p class="q">问：go func(c &lt;-chan int) { ... }(c) 是什么写法？</p>
+  <div class="content">
+    <p>匿名函数 + 立即调用（类似 IIFE），并通过<strong>参数值拷贝</strong>把循环当前的 <code>c</code> 绑定为新 goroutine 内部独立的局部变量，避免多个 goroutine 共享同一个外层循环变量。</p>
+    <div class="key">Go 1.22 之前，for range 的循环变量是同一个变量被反复赋值，闭包直接捕获会导致所有 goroutine 读到同一个值（通常是最后一个）；Go 1.22+ 已修复语义，但显式传参仍是更清晰、不依赖版本的惯用写法。</div>
+  </div>
+  <div class="tags"><span class="tag">闭包</span><span class="tag">goroutine</span></div>
+</section>
+
+<section class="card" id="q18">
+  <h2><span class="num">18</span>Pipeline 中 channel 的关闭传播</h2>
+  <p class="q">问：in 没有被显式 close，square 里的 goroutine 不是会一直运行吗？</p>
+  <div class="content">
+    <p><code>in</code> 由 <code>gen</code> 内部创建并负责 close（<code>defer close(out)</code>），遵循"谁创建 channel 谁负责关闭"的原则，调用方不需要也不应该去关。</p>
+    <div class="key">关闭是一条连锁反应：gen 发完数据 close(in) → square 的 range 退出并 close 自己的输出 → merge 的搬运 goroutine 退出，wg.Done() → merge 的等待 goroutine 收到后 close(out) → 最外层 range 退出。每一层只管好自己的输入/输出。</div>
+  </div>
+  <div class="tags"><span class="tag">Pipeline</span><span class="tag">channel 关闭</span></div>
+</section>
+
+<section class="card" id="q19">
+  <h2><span class="num">19</span>context.cancel 的本质</h2>
+  <p class="q">问：cancel() 为什么没有发现有这个函数？</p>
+  <div class="content">
+    <p><code>cancel</code> 不是包级函数，而是 <code>context.WithCancel(parent)</code> 返回的第二个值——一个<strong>闭包（CancelFunc）</strong>，捕获了对应的 ctx，调用它会关闭 ctx 内部的 Done channel。</p>
+    <div class="key">职责分离：ctx（只读）交给被控制方监听是否该退出；cancel（能触发关闭）留给控制方决定何时喊停。调用了 WithCancel 就应保证 cancel 最终被调用（通常 defer cancel()），否则有轻微资源泄漏风险。</div>
+  </div>
+  <div class="tags"><span class="tag">context</span><span class="tag">取消</span></div>
+</section>
+
+<section class="card" id="q20">
+  <h2><span class="num">20</span>select + time.After 验证 goroutine 正确退出</h2>
+  <p class="q">问：这段 select 会执行到哪个分支？</p>
+  <div class="content">
+    <p>会走 <code>&lt;-finished</code> 分支。cancel() 触发 ctx.Done() 关闭 → producer 的 select 立刻感知并 return → defer close(finished) 触发 → finished 关闭使 &lt;-finished 立刻就绪，整个过程远快于 1 秒。</p>
+    <div class="key">time.After(1s) 只是超时兜底：仅当 producer 没有正确响应取消、永不退出时才会触发"泄漏了"分支。这是验证 goroutine 是否正确退出的常见测试套路。</div>
+  </div>
+  <div class="tags"><span class="tag">context</span><span class="tag">select</span></div>
+</section>
+
+<section class="card" id="q21">
+  <h2><span class="num">21</span>channel 什么时候不需要 close</h2>
+  <p class="q">问：为什么 out 没有 close？</p>
+  <div class="content">
+    <p>main 消费 <code>out</code> 用的是固定次数的 <code>&lt;-out</code>，不是 <code>range out</code>，所以不依赖"channel 关闭"作为退出信号。取消是异步发生的，发送方无法保证关闭时自己绝对不在发送中途，贸然 close 会给未来的改动埋下"向已关闭 channel 发送导致 panic"的隐患。</p>
+    <div class="key">判断标准：消费方用 range 等待结束 → 发送方必须 close；消费方自己知道该收几个、何时不再收 → 不需要 close。另外，channel 本身可被 GC 回收，不像文件/连接那样必须显式关闭才能释放资源，close 只是一种"通知信号"。</div>
+  </div>
+  <div class="tags"><span class="tag">channel</span><span class="tag">context</span></div>
+</section>
+
+</div>
+
+<footer>Go 并发与内存模型学习笔记 · 共 21 条</footer>
+
+</body>
+</html>
